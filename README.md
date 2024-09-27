@@ -127,7 +127,7 @@ If you find our repo useful, please cite as below:
 ```bibtex
 @article{luu2024universal,
   title={Universal Quantum Tomography With Deep Neural Networks},
-  author={Luu, Nhan T and Thang, Truong Cong},
+  author={Luu, Nhan T and Thang, Truong Cong and Duong T. Luu},
   journal={arXiv preprint arXiv:2407.01734},
   year={2024}
 }
