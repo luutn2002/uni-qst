@@ -49,6 +49,7 @@ test_dataset = tf.data.Dataset.from_tensor_slices((test_x, test_y, test_z))
 
 ## Using RFB-Net and MS-NN in your experiments
 
+### Using MS-NN
 To use MS-NN for training, you can simply call:
 
 ```python
@@ -75,12 +76,12 @@ model = MSNN()
 ops = create_tf_training_ops(batch_size)
 
 for measurement, label, state in train_dataset:
-    train_step(MSNN_MSE_Loss, model, measurement, label, state, ops, optimizer)
-    dm, _ = model([ops, label, measurement])
-    fidelity = tf_fidelity(dm, values) #Recieved quantum fidelity here.
-    ... #Do some other postprocessing.
+  train_step(MSNN_MSE_Loss, model, measurement, label, state, ops, optimizer)
+  dm, _ = model([ops, label, measurement])
+  fidelity = tf_fidelity(dm, values) #Recieved quantum fidelity here.
+  ... #Do some other postprocessing.
 ```
-
+### Using RFB-Net
 To use RFB-Net for training, you can simply call:
 
 ```python
@@ -102,20 +103,36 @@ epochs = 100
 
 with device:
 
-        train_dataset = CustomTensorDataset((train_data, train_label, train_value, train_ft))
+  train_dataset = CustomTensorDataset((train_data, train_label, train_value, train_ft))
 
-        train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
+  train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
 
-        loss = LinearCombinationLoss().to(device)
-        model = RFBNet()
-        model.double().to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-        
-        for t in range(epochs):
-            train_step(loss, model, train_dataloader, optimizer, device)
-            ... #Do some postprocessing.
+  loss = LinearCombinationLoss().to(device)
+  model = RFBNet()
+  model.double().to(device)
+  optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+  
+  for t in range(epochs):
+      train_step(loss, model, train_dataloader, optimizer, device)
+      ... #Do some postprocessing.
+
 ```
+For validation on RFB-Net, you can call the Reconstrutor class:
+```python
+from uni_qst.rfb_net.ops import Reconstructor
+from qutip import fidelity, Qobj
 
+recon = Reconstructor().to(device)
+
+for data in test_dataset
+pred_label, pred_feature = model(data) #Data state from test dataset.
+pred_state = recon(pred_label.argmax(1).type(torch.LongTensor), pred_feature)
+#Training on torch sometimes create NaN entries for some unknown reason, uncomment this for your measurement.
+#pred_state.real = torch.nan_to_num(pred_state.real, nan=0.0)
+#pred_state.imag = torch.nan_to_num(pred_state.imag, nan=0.0)
+
+fidelity_score = fidelity(Qobj(torch.squeeze(pred_state).numpy()), Qobj(torch.squeeze(value).numpy()))
+```
 ## References
 
 This work is based largely from QST-NN and QST-CGAN. Original repo to QST-NN and QST-CGAN can be found [here](https://github.com/quantshah/qst-nn) and [here](https://github.com/quantshah/qst-cgan)
@@ -127,7 +144,7 @@ If you find our repo useful, please cite as below:
 ```bibtex
 @article{luu2024universal,
   title={Universal Quantum Tomography With Deep Neural Networks},
-  author={Luu, Nhan T and Thang, Truong Cong},
+  author={Luu, Nhan T and Thang, Truong Cong and Duong, Luu T},
   journal={arXiv preprint arXiv:2407.01734},
   year={2024}
 }
